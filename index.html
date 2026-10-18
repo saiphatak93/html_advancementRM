@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HTML Beyond JavaScript: Choose a Version</title>
+<!-- This landing page uses no JavaScript. The two buttons are ordinary links. -->
+<style>
+  * { box-sizing: border-box; }
+  body { margin:0; min-height:100vh; display:flex; flex-direction:column; font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: radial-gradient(circle at 20% 10%, #3a46a0 0, #1b2260 45%, #10143a 100%); color:#fff; }
+  header { text-align:center; padding:56px 20px 10px; }
+  header h1 { margin:0 0 10px; font-size:clamp(2rem,6vw,3.4rem); letter-spacing:-.5px; }
+  header p { margin:0 auto; max-width:680px; opacity:.9; font-size:1.05rem; line-height:1.55; }
+  .tag { display:inline-block; margin-bottom:14px; padding:4px 14px; border-radius:99px; background:rgba(255,255,255,.15); font-size:.82rem; }
+  main { flex:1; display:grid; grid-template-columns:1fr 1fr; gap:24px; max-width:980px; width:100%; margin:34px auto; padding:0 20px; }
+  @media (max-width:720px) { main { grid-template-columns:1fr; } }
+  .choice { display:flex; flex-direction:column; gap:12px; padding:28px; border-radius:20px; text-decoration:none; color:#fff;
+    border:2px solid rgba(255,255,255,.25); transition: transform .2s, box-shadow .2s, border-color .2s; }
+  .choice:hover, .choice:focus-visible { transform: translateY(-5px); box-shadow:0 14px 36px rgba(0,0,0,.4); border-color:#fff; outline:none; }
+  .choice.js { background:linear-gradient(145deg,#b86e00,#e09a1a); }
+  .choice.nojs { background:linear-gradient(145deg,#136b3a,#1fa05a); }
+  .choice .big { font-size:1.9rem; font-weight:800; }
+  .choice .code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size:.85rem; background:rgba(0,0,0,.28); padding:8px 10px; border-radius:8px; }
+  .choice ul { margin:0; padding-left:18px; line-height:1.6; font-size:.95rem; }
+  .choice .go { margin-top:auto; align-self:flex-start; background:#fff; color:#1b2260; font-weight:700; padding:10px 20px; border-radius:99px; }
+  .extra { text-align:center; padding:0 20px 14px; }
+  .extra a { color:#cfd5ff; }
+  footer { text-align:center; padding:18px 20px 30px; font-size:.85rem; opacity:.75; }
+
+  /* ===== Responsive ===== */
+  html { -webkit-text-size-adjust:100%; }
+  main > *, .choice > * { min-width:0; }
+  .choice .code { overflow-wrap:anywhere; }
+  @media (max-width:720px) {
+    header { padding:36px 16px 4px; }
+    main { gap:16px; margin:22px auto; padding:0 16px; }
+    .choice { padding:22px 18px; }
+    .choice .big { font-size:1.6rem; }
+    .choice .go { min-height:44px; display:inline-flex; align-items:center; }
+  }
+  @media (prefers-reduced-motion: reduce) { .choice { transition:none; } .choice:hover { transform:none; } }
+</style>
+</head>
+<body>
+<header>
+  <span class="tag">Research Methodology Project</span>
+  <h1>HTML Beyond JavaScript</h1>
+  <p>The same website features, such as popups on every side, dialogs, accordions, carousels and scroll effects, built two ways. Choose a version to see it working.</p>
+</header>
+
+<main>
+  <a class="choice js" href="with-js.html">
+    <span class="big">With JavaScript</span>
+    <span class="code">button.addEventListener('click', ...)</span>
+    <ul>
+      <li>The traditional way</li>
+      <li>Event listeners, position maths, timers</li>
+      <li>Shows the code that runs each demo</li>
+      <li>Stops working if JavaScript is off</li>
+    </ul>
+    <span class="go">Open this version &rarr;</span>
+  </a>
+
+  <a class="choice nojs" href="without-js.html">
+    <span class="big">Without JavaScript</span>
+    <span class="code">&lt;button popovertarget="tip"&gt;</span>
+    <ul>
+      <li>The new way: HTML and CSS only</li>
+      <li>Popover, invoker commands, anchor positioning</li>
+      <li>Zero lines of JavaScript on the page</li>
+      <li>Shows if your browser supports each feature</li>
+    </ul>
+    <span class="go">Open this version &rarr;</span>
+  </a>
+</main>
+
+<div class="extra">Want both together? <a href="side-by-side.html">Open the side-by-side comparison</a></div>
+<footer>This landing page itself contains no JavaScript. The two buttons are plain HTML links.</footer>
+</body>
+</html>
