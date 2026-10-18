@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>No-JS Web Lab: Modern HTML &amp; CSS Replacing JavaScript</title>
+<!-- NOTE: This entire page contains ZERO JavaScript. Every interaction is HTML + CSS only. -->
+<style>
+  :root { --ink:#1c2033; --brand:#26307a; --brand2:#3a46a0; --bg:#f5f6fa; --card:#fff; --line:#d5d8ea; --ok:#1b8a4b; --bad:#b3261e; interpolate-size: allow-keywords; scroll-behavior: smooth; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background:var(--bg); color:var(--ink); line-height:1.55; }
+  header.hero { background:linear-gradient(135deg,#1b2260,#3a46a0); color:#fff; padding:44px 20px 36px; }
+  .wrap { max-width:1100px; margin:0 auto; padding:0 20px; }
+  header.hero h1 { margin:0 0 8px; font-size:clamp(1.6rem,4vw,2.4rem); }
+  header.hero p { margin:4px 0; max-width:760px; opacity:.92; }
+  .pill { display:inline-block; background:rgba(255,255,255,.18); padding:3px 12px; border-radius:99px; font-size:.82rem; margin:10px 6px 0 0; }
+  nav.toc { position:sticky; top:0; z-index:20; background:#fff; border-bottom:1px solid var(--line); overflow-x:auto; white-space:nowrap; }
+  nav.toc a { display:inline-block; padding:10px 12px; font-size:.85rem; color:var(--brand); text-decoration:none; }
+  nav.toc a:hover { background:#eceefa; }
+  main { max-width:1100px; margin:0 auto; padding:20px; }
+  section { background:var(--card); border-radius:14px; padding:22px; margin:20px 0; box-shadow:0 2px 8px rgba(0,0,0,.07); scroll-margin-top:50px; }
+  section h2 { margin:0 0 4px; font-size:1.3rem; }
+  .num { display:inline-grid; place-items:center; width:30px; height:30px; background:var(--brand); color:#fff; border-radius:50%; font-size:.9rem; margin-right:8px; }
+  .meta { font-size:.82rem; color:#5a6080; margin:4px 0 12px; }
+  .sup { display:inline-block; font-weight:600; padding:2px 10px; border-radius:99px; font-size:.78rem; }
+  .sup .yes { display:none; } .sup { background:#fde7e5; color:var(--bad); }
+  .demo { border:2px dashed var(--line); border-radius:10px; padding:18px; margin:12px 0; display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:center; min-height:120px; }
+  .cmp { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media (max-width:760px) { .cmp { grid-template-columns:1fr; } }
+  .cmp h4 { margin:0 0 4px; font-size:.85rem; }
+  .cmp h4.old { color:#a05a00; } .cmp h4.new { color:var(--ok); }
+  pre { margin:0; background:#12152b; color:#d8def5; padding:12px; border-radius:8px; overflow:auto; font-size:.76rem; max-height:280px; }
+  button, .btn { font:inherit; padding:8px 14px; border:0; border-radius:8px; background:var(--brand); color:#fff; cursor:pointer; }
+  button:hover { background:var(--brand2); }
+  .tip { background:#1c2033; color:#fff; padding:8px 12px; border-radius:8px; font-size:.85rem; border:0; }
+  code { background:#eceefa; padding:1px 5px; border-radius:4px; font-size:.85em; }
+
+  /* ---- progress bar: scroll-driven animation (section 7) ---- */
+  @supports (animation-timeline: scroll()) {
+    .progress { position:fixed; top:0; left:0; right:0; height:4px; background:#ffb703; transform-origin:left; z-index:50;
+      animation: grow linear both; animation-timeline: scroll(root); }
+    @keyframes grow { from { transform:scaleX(0); } to { transform:scaleX(1); } }
+    section { animation: rise linear both; animation-timeline: view(); animation-range: entry 0% entry 35%; }
+    @keyframes rise { from { opacity:.15; translate:0 40px; } to { opacity:1; translate:0 0; } }
+  }
+
+  /* ---- 1. Popover + anchor positioning ---- */
+  #t1, #t2, #t3, #t4 { inset:auto; margin:10px; }
+  #t1 { position-anchor:--b1; position-area:top; }
+  #t2 { position-anchor:--b2; position-area:bottom; }
+  #t3 { position-anchor:--b3; position-area:left center; }
+  #t4 { position-anchor:--b4; position-area:right center; }
+
+  /* ---- 2. Dialog ---- */
+  dialog { border:0; border-radius:14px; padding:24px; max-width:360px; box-shadow:0 12px 40px rgba(0,0,0,.35); }
+  dialog::backdrop { background:rgba(10,12,30,.55); }
+  dialog { transition: opacity .25s, scale .25s, overlay .25s allow-discrete, display .25s allow-discrete; opacity:0; scale:.92; }
+  dialog[open] { opacity:1; scale:1; }
+  @starting-style { dialog[open] { opacity:0; scale:.92; } }
+  dialog::backdrop { transition: opacity .25s, overlay .25s allow-discrete, display .25s allow-discrete; opacity:0; }
+  dialog[open]::backdrop { opacity:1; }
+  @starting-style { dialog[open]::backdrop { opacity:0; } }
+
+  /* ---- 3. Interest invoker ---- */
+  #hint1 { position-anchor:--hi; position-area:top; inset:auto; margin:8px; }
+
+  /* ---- 4. Accordion ---- */
+  .acc details { border:1px solid var(--line); border-radius:8px; margin:6px 0; width:100%; background:#fafbff; }
+  .acc summary { cursor:pointer; padding:10px 14px; font-weight:600; }
+  .acc details > div { padding:0 14px 12px; }
+  .acc details::details-content { block-size:0; overflow:clip; transition: block-size .3s ease, content-visibility .3s allow-discrete; }
+  .acc details[open]::details-content { block-size:auto; }
+
+  /* ---- 5. field-sizing ---- */
+  textarea.grow { field-sizing:content; min-height:3lh; max-height:8lh; width:min(100%,420px); padding:8px; border:1px solid var(--line); border-radius:8px; font:inherit; }
+
+  /* ---- 6. customizable select ---- */
+  @supports (appearance: base-select) {
+    .fancy, .fancy::picker(select) { appearance: base-select; }
+    .fancy { padding:8px 12px; border:1px solid var(--brand); border-radius:8px; background:#fff; font:inherit; min-width:210px; }
+    .fancy::picker(select) { border:1px solid var(--line); border-radius:10px; padding:6px; box-shadow:0 8px 24px rgba(0,0,0,.18); }
+    .fancy option { padding:8px 10px; border-radius:6px; display:flex; gap:8px; }
+    .fancy option:hover { background:#eceefa; }
+    .fancy option:checked { font-weight:700; }
+  }
+
+  /* ---- 8. CSS carousel ---- */
+  ul.carousel { list-style:none; margin:0; padding:0; display:flex; overflow-x:auto; scroll-snap-type:x mandatory; width:min(100%,520px); border-radius:12px; scroll-marker-group:after; scrollbar-width:none; }
+  ul.carousel li { flex:0 0 100%; scroll-snap-align:center; height:150px; display:grid; place-items:center; font-size:1.3rem; font-weight:700; color:#fff; }
+  ul.carousel li:nth-child(1) { background:#26307a; } ul.carousel li:nth-child(2) { background:#1b8a4b; }
+  ul.carousel li:nth-child(3) { background:#c2410c; } ul.carousel li:nth-child(4) { background:#7b2cbf; }
+  @supports selector(::scroll-marker) {
+    ul.carousel::scroll-marker-group { display:flex; gap:8px; justify-content:center; padding:10px; }
+    ul.carousel li::scroll-marker { content:""; width:11px; height:11px; border-radius:50%; background:#b9bdd6; }
+    ul.carousel li::scroll-marker:target-current { background:var(--brand); }
+  }
+  @supports selector(::scroll-button(left)) {
+    ul.carousel { position:relative; }
+    ul.carousel::scroll-button(left) { content:"◀"; }
+    ul.carousel::scroll-button(right) { content:"▶"; }
+  }
+
+  /* ---- 9. entry / exit animation ---- */
+  #toast { inset:auto 20px 20px auto; margin:0; border:0; border-radius:10px; padding:14px 18px; background:#1b8a4b; color:#fff;
+    transition: opacity .35s, translate .35s, display .35s allow-discrete, overlay .35s allow-discrete; opacity:0; translate:0 30px; }
+  #toast:popover-open { opacity:1; translate:0 0; }
+  @starting-style { #toast:popover-open { opacity:0; translate:0 30px; } }
+
+  /* ---- 10. :has() parent styling ---- */
+  .choice { border:2px solid var(--line); border-radius:10px; padding:10px 14px; cursor:pointer; transition:.2s; display:flex; gap:8px; align-items:center; }
+  .choice:has(input:checked) { border-color:var(--ok); background:#e9f7ee; }
+  form.has:has(input[type=email]:user-invalid) .hint { display:block; }
+  .hint { display:none; color:var(--bad); font-size:.85rem; }
+  input[type=email] { padding:8px; border:1px solid var(--line); border-radius:8px; font:inherit; }
+  input[type=email]:user-invalid { border-color:var(--bad); }
+  input[type=email]:user-valid { border-color:var(--ok); }
+
+  footer { text-align:center; padding:30px 20px 50px; color:#5a6080; font-size:.85rem; }
+
+  /* ---- Support badges: shown "green" only if the browser understands the feature ---- */
+  @supports (position-area: top) { #s1 { background:#e3f5ea; color:var(--ok); } #s1 .yes { display:inline; } #s1 .no { display:none; } }
+  @supports (appearance: base-select) { #s6 { background:#e3f5ea; color:var(--ok); } #s6 .yes { display:inline; } #s6 .no { display:none; } }
+  @supports (field-sizing: content) { #s5 { background:#e3f5ea; color:var(--ok); } #s5 .yes { display:inline; } #s5 .no { display:none; } }
+  @supports (animation-timeline: scroll()) { #s7 { background:#e3f5ea; color:var(--ok); } #s7 .yes { display:inline; } #s7 .no { display:none; } }
+  @supports selector(::scroll-marker) { #s8 { background:#e3f5ea; color:var(--ok); } #s8 .yes { display:inline; } #s8 .no { display:none; } }
+  @supports (transition-behavior: allow-discrete) { #s9 { background:#e3f5ea; color:var(--ok); } #s9 .yes { display:inline; } #s9 .no { display:none; } }
+  @supports selector(:has(a)) { #s10 { background:#e3f5ea; color:var(--ok); } #s10 .yes { display:inline; } #s10 .no { display:none; } }
+  @supports (interpolate-size: allow-keywords) { #s4 { background:#e3f5ea; color:var(--ok); } #s4 .yes { display:inline; } #s4 .no { display:none; } }
+  .topbar { background:#10143a; color:#fff; padding:8px 20px; font-size:.85rem; display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+  .topbar a { color:#ffd27a; }
+
+  /* ===== Responsive ===== */
+  html { -webkit-text-size-adjust:100%; }
+  img, svg, video { max-width:100%; height:auto; }
+  .cmp > div, .demo > *, .wrap, main, section { min-width:0; }
+  .meta, section h2, .tip { overflow-wrap:anywhere; }
+  .tip { max-width:min(240px, 80vw); }
+  #t1, #t2, #hint1 { position-try-fallbacks: flip-block; }
+  #t3, #t4 { position-try-fallbacks: flip-inline; }
+  dialog { max-width:min(360px, calc(100vw - 32px)); }
+  #toast { max-width:calc(100vw - 40px); }
+  ul.carousel { max-width:100%; }
+  textarea.grow { max-width:100%; }
+  .fancy { max-width:100%; }
+  @media (max-width:760px) {
+    header.hero { padding:30px 0 26px; }
+    .wrap, main { padding-left:16px; padding-right:16px; }
+    main { padding-top:8px; }
+    section { padding:16px; margin:14px 0; border-radius:12px; }
+    section h2 { font-size:1.12rem; line-height:1.3; }
+    .num { width:26px; height:26px; flex:none; }
+    .demo { padding:12px; gap:8px; }
+    button { min-height:44px; padding:10px 16px; }
+    .acc summary { min-height:44px; display:flex; align-items:center; }
+    nav.toc a { padding:13px 12px; }
+    .topbar { font-size:.8rem; padding:8px 16px; justify-content:center; text-align:center; }
+    pre { font-size:.72rem; }
+  }
+  @media (max-width:380px) {
+    header.hero h1 { font-size:1.45rem; }
+    .pill { font-size:.74rem; padding:2px 9px; margin:6px 4px 0 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation:none !important; transition-duration:.01ms !important; scroll-behavior:auto !important; }
+  }
+</style>
+</head>
+<body>
+<div class="topbar"><a href="index.html">&larr; Home</a><span>Version: <b>Without JavaScript</b> (HTML + CSS only)</span><a href="with-js.html">Switch to the With JavaScript version &rarr;</a></div>
+<div class="progress" aria-hidden="true"></div>
+
+<header class="hero">
+  <div class="wrap">
+    <h1>No-JS Web Lab</h1>
+    <p>A research demo: modern HTML and CSS can now do things that used to need JavaScript. Every demo below runs with <b>zero lines of JavaScript</b>. View the page source to check.</p>
+    <p><b>Research question:</b> Which common interactive UI patterns can be built today with only HTML and CSS, and how well are they supported across browsers?</p>
+    <span class="pill">Popover</span><span class="pill">Invoker Commands</span><span class="pill">Anchor Positioning</span><span class="pill">Scroll-driven animation</span><span class="pill">CSS Carousel</span><span class="pill">Customizable select</span><span class="pill">:has()</span>
+  </div>
+</header>
+
+<nav class="toc"><div class="wrap">
+  <a href="#popover">1 Popover</a><a href="#dialog">2 Dialog</a><a href="#interest">3 Hover tips</a><a href="#accordion">4 Accordion</a><a href="#textarea">5 Textarea</a><a href="#select">6 Select</a><a href="#scroll">7 Scroll anim</a><a href="#carousel">8 Carousel</a><a href="#enterexit">9 Enter/exit</a><a href="#has">10 :has()</a><a href="#vt">11 Page transitions</a>
+</div></nav>
+
+<main>
+
+<!-- 1 -->
+<section id="popover">
+  <h2><span class="num">1</span>Popover + anchor positioning (top, bottom, left, right)</h2>
+  <div class="meta">Replaces: tooltip/dropdown libraries and manual position maths. &nbsp; <span class="sup" id="s1"><span class="yes">✅ Works in your browser</span><span class="no">❌ Anchor positioning not supported in your browser</span></span></div>
+  <div class="demo">
+    <button popovertarget="t1" style="anchor-name:--b1">Top</button>
+    <button popovertarget="t2" style="anchor-name:--b2">Bottom</button>
+    <button popovertarget="t3" style="anchor-name:--b3">Left</button>
+    <button popovertarget="t4" style="anchor-name:--b4">Right</button>
+    <div id="t1" popover class="tip">Top popup</div>
+    <div id="t2" popover class="tip">Bottom popup</div>
+    <div id="t3" popover class="tip">Left popup</div>
+    <div id="t4" popover class="tip">Right popup</div>
+  </div>
+  <div class="cmp">
+    <div><h4 class="old">Before: JavaScript</h4><pre>btn.onclick = () =&gt; {
+  const r = btn.getBoundingClientRect();
+  tip.style.top  = r.top - tip.offsetHeight - 8 + 'px';
+  tip.style.left = r.left + r.width/2
+                 - tip.offsetWidth/2 + 'px';
+  tip.hidden = false;
+};
+document.onclick = e =&gt; { /* close if outside */ };
+document.onkeydown = e =&gt; { /* close on Escape */ };</pre></div>
+    <div><h4 class="new">Now: HTML + CSS</h4><pre>&lt;button popovertarget="t1"
+  style="anchor-name:--b1"&gt;Top&lt;/button&gt;
+&lt;div id="t1" popover&gt;Top popup&lt;/div&gt;
+
+#t1 { position-anchor:--b1;
+      position-area:top;
+      inset:auto; margin:10px; }
+/* outside-click + Esc closing is built in */</pre></div>
+  </div>
+</section>
+
+<!-- 2 -->
+<section id="dialog">
+  <h2><span class="num">2</span>Dialog with Invoker Commands and <code>closedby</code></h2>
+  <div class="meta">Replaces: <code>showModal()</code> click handlers and click-outside listeners. Invoker commands: Chrome 135, Firefox 144, Safari 26.2. <code>closedby</code>: Chrome 134+ (not Safari at time of research).</div>
+  <div class="demo">
+    <button commandfor="dlg" command="show-modal">Open dialog</button>
+    <dialog id="dlg" closedby="any">
+      <h3 style="margin-top:0">Hello from HTML</h3>
+      <p>Click outside or press Esc to close this dialog. No JavaScript is running.</p>
+      <button commandfor="dlg" command="close">Close</button>
+    </dialog>
+  </div>
+  <div class="cmp">
+    <div><h4 class="old">Before: JavaScript</h4><pre>openBtn.onclick = () =&gt; dlg.showModal();
+closeBtn.onclick = () =&gt; dlg.close();
+dlg.addEventListener('click', e =&gt; {
+  const r = dlg.getBoundingClientRect();
+  if (e.clientX &lt; r.left || e.clientX &gt; r.right ||
+      e.clientY &lt; r.top  || e.clientY &gt; r.bottom)
+    dlg.close();
+});</pre></div>
+    <div><h4 class="new">Now: HTML</h4><pre>&lt;button commandfor="dlg" command="show-modal"&gt;Open&lt;/button&gt;
+&lt;dialog id="dlg" closedby="any"&gt;
+  ...
+  &lt;button commandfor="dlg" command="close"&gt;Close&lt;/button&gt;
+&lt;/dialog&gt;</pre></div>
+  </div>
+</section>
+
+<!-- 3 -->
+<section id="interest">
+  <h2><span class="num">3</span>Hover and focus tooltips with <code>interestfor</code></h2>
+  <div class="meta">Replaces: mouseenter/mouseleave/focus listeners. Status: experimental. MDN lists it as experimental, and sources report Chrome 142+. Other browsers: nothing happens. That is a useful research finding about progressive enhancement.</div>
+  <div class="demo">
+    <button interestfor="hint1" style="anchor-name:--hi">Hover or focus me</button>
+    <div id="hint1" popover="hint" class="tip">Tooltip opened by hover/focus, no JS</div>
+  </div>
+  <div class="cmp">
+    <div><h4 class="old">Before: JavaScript</h4><pre>btn.addEventListener('mouseenter', show);
+btn.addEventListener('focus', show);
+btn.addEventListener('mouseleave', hide);
+btn.addEventListener('blur', hide);
+/* plus delays, touch handling, ARIA */</pre></div>
+    <div><h4 class="new">Now: HTML</h4><pre>&lt;button interestfor="hint1"&gt;Hover me&lt;/button&gt;
+&lt;div id="hint1" popover="hint"&gt;Tooltip&lt;/div&gt;</pre></div>
+  </div>
+</section>
+
+<!-- 4 -->
+<section id="accordion">
+  <h2><span class="num">4</span>Exclusive accordion with <code>&lt;details name&gt;</code></h2>
+  <div class="meta">Replaces: accordion scripts that close the other panels. <code>name</code> and <code>::details-content</code> work in current Chrome, Firefox and Safari (per a May 2026 source). Smooth height animation needs <code>interpolate-size</code>, which is Chromium-only. &nbsp; <span class="sup" id="s4"><span class="yes">✅ Smooth animation works here</span><span class="no">❌ Panels open instantly in your browser</span></span></div>
+  <div class="demo acc" style="display:block">
+    <details name="faq" open><summary>What is the Popover API?</summary><div>A built-in way to show a layer on top of the page, with light dismiss and focus handling.</div></details>
+    <details name="faq"><summary>What does the name attribute do?</summary><div>Panels with the same name form a group. Opening one closes the others.</div></details>
+    <details name="faq"><summary>Is this accessible?</summary><div>Yes. <code>&lt;details&gt;</code> is keyboard accessible and announced by screen readers. Exclusive groups have UX trade-offs, so use them thoughtfully.</div></details>
+  </div>
+  <div class="cmp">
+    <div><h4 class="old">Before: JavaScript</h4><pre>document.querySelectorAll('.panel-btn').forEach(b =&gt; {
+  b.onclick = () =&gt; {
+    document.querySelectorAll('.panel')
+      .forEach(p =&gt; p.style.height = 0);
+    b.nextElementSibling.style.height =
+      b.nextElementSibling.scrollHeight + 'px';
+  };
+});</pre></div>
+    <div><h4 class="new">Now: HTML + CSS</h4><pre>&lt;details name="faq"&gt;...&lt;/details&gt;
+&lt;details name="faq"&gt;...&lt;/details&gt;
+
+:root { interpolate-size: allow-keywords; }
+details::details-content { block-size:0;
+  transition: block-size .3s,
+              content-visibility .3s allow-discrete; }
+details[open]::details-content { block-size:auto; }</pre></div>
+  </div>
+</section>
+
+<!-- 5 -->
+<section id="textarea">
+  <h2><span class="num">5</span>Auto-growing textarea with <code>field-sizing</code></h2>
+  <div class="meta">Replaces: the scrollHeight resize hack. Sources report Chrome/Edge since 2024, Safari 26.2 and Firefox 152 (June 2026). &nbsp; <span class="sup" id="s5"><span class="yes">✅ Works in your browser</span><span class="no">❌ Not supported in your browser</span></span></div>
+  <div class="demo"><textarea class="grow" placeholder="Type several lines here and watch the box grow..."></textarea></div>
+  <div class="cmp">
+    <div><h4 class="old">Before: JavaScript</h4><pre>ta.addEventListener('input', () =&gt; {
+  ta.style.height = 'auto';
+  ta.style.height = ta.scrollHeight + 'px';
+});</pre></div>
+    <div><h4 class="new">Now: CSS</h4><pre>textarea { field-sizing: content;
+           min-height: 3lh;
+           max-height: 8lh; }</pre></div>
+  </div>
+</section>
+
+<!-- 6 -->
+<section id="select">
+  <h2><span class="num">6</span>Styleable dropdown with <code>appearance: base-select</code></h2>
+  <div class="meta">Replaces: Select2, Choices.js and other custom dropdown libraries. Chromium-based browsers only at the time of research. Other browsers show the normal native select, which still works. &nbsp; <span class="sup" id="s6"><span class="yes">✅ Styled select active</span><span class="no">❌ Plain native select (fallback)</span></span></div>
+  <div class="demo">
+    <select class="fancy" aria-label="Favourite language">
+      <option>🌐 HTML</option>
+      <option>🎨 CSS</option>
+      <option>⚙️ JavaScript</option>
+      <option>🐍 Python</option>
+    </select>
+  </div>
+  <div class="cmp">
+    <div><h4 class="old">Before: JavaScript</h4><pre>/* hide the real select, build a div list,
+   sync values, add keyboard nav, ARIA roles,
+   focus management... or install a library */</pre></div>
+    <div><h4 class="new">Now: CSS</h4><pre>select, select::picker(select) {
+  appearance: base-select;
+}
+select option:checked { font-weight: 700; }</pre></div>
+  </div>
+</section>
+
+<!-- 7 -->
+<section id="scroll">
+  <h2><span class="num">7</span>Scroll-driven animation</h2>
+  <div class="meta">Replaces: scroll listeners and IntersectionObserver. The yellow bar at the top of this page and the fade-up of each section are pure CSS. Chrome/Edge 115+, Safari 26. Firefox: not enabled by default at the time of research. &nbsp; <span class="sup" id="s7"><span class="yes">✅ Active in your browser</span><span class="no">❌ Not supported in your browser</span></span></div>
+  <div class="cmp">
+    <div><h4 class="old">Before: JavaScript</h4><pre>addEventListener('scroll', () =&gt; {
+  const p = scrollY /
+    (document.body.scrollHeight - innerHeight);
+  bar.style.transform = `scaleX(${p})`;
+});</pre></div>
+    <div><h4 class="new">Now: CSS</h4><pre>.progress { transform-origin:left;
+  animation: grow linear both;
+  animation-timeline: scroll(root); }
+@keyframes grow {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); } }</pre></div>
+  </div>
+</section>
+
+<!-- 8 -->
+<section id="carousel">
+  <h2><span class="num">8</span>Carousel with <code>::scroll-button()</code> and <code>::scroll-marker</code></h2>
+  <div class="meta">Replaces: slider libraries (Swiper, Slick). Chrome/Edge 135+ at the time of research. Elsewhere it degrades to a normal scroll-snap strip. &nbsp; <span class="sup" id="s8"><span class="yes">✅ Dots and buttons supported</span><span class="no">❌ Basic scroll-snap only</span></span></div>
+  <div class="demo">
+    <ul class="carousel" aria-label="Demo carousel">
+      <li>Slide 1</li><li>Slide 2</li><li>Slide 3</li><li>Slide 4</li>
+    </ul>
+  </div>
+  <div class="cmp">
+    <div><h4 class="old">Before: JavaScript</h4><pre>/* track index, translate the track, build dots,
+   handle swipe, keyboard, resize, ARIA ... */
+next.onclick = () =&gt; go(i + 1);
+prev.onclick = () =&gt; go(i - 1);</pre></div>
+    <div><h4 class="new">Now: CSS</h4><pre>.carousel { overflow-x:auto;
+  scroll-snap-type:x mandatory;
+  scroll-marker-group:after; }
+.carousel li::scroll-marker { content:""; }
+.carousel li::scroll-marker:target-current { ... }
+.carousel::scroll-button(right) { content:"▶"; }</pre></div>
+  </div>
+</section>
+
+<!-- 9 -->
+<section id="enterexit">
+  <h2><span class="num">9</span>Enter and exit animations with <code>@starting-style</code></h2>
+  <div class="meta">Replaces: setTimeout / transitionend juggling before removing an element. Baseline (newly available) since 2024. &nbsp; <span class="sup" id="s9"><span class="yes">✅ Works in your browser</span><span class="no">❌ Not supported in your browser</span></span></div>
+  <div class="demo">
+    <button popovertarget="toast">Show a toast</button>
+    <div id="toast" popover>✅ Saved! This slid in with CSS only. Click outside to dismiss.</div>
+  </div>
+  <div class="cmp">
+    <div><h4 class="old">Before: JavaScript</h4><pre>el.classList.add('show');
+/* to hide: */
+el.classList.remove('show');
+el.addEventListener('transitionend', () =&gt; {
+  el.hidden = true;
+}, { once: true });</pre></div>
+    <div><h4 class="new">Now: CSS</h4><pre>#toast { transition: opacity .35s, translate .35s,
+  display .35s allow-discrete,
+  overlay .35s allow-discrete; opacity:0; }
+#toast:popover-open { opacity:1; }
+@starting-style { #toast:popover-open { opacity:0; } }</pre></div>
+  </div>
+</section>
+
+<!-- 10 -->
+<section id="has">
+  <h2><span class="num">10</span>Parent styling and form feedback with <code>:has()</code> and <code>:user-valid</code></h2>
+  <div class="meta">Replaces: toggling classes from change/input event handlers. &nbsp; <span class="sup" id="s10"><span class="yes">✅ Works in your browser</span><span class="no">❌ Not supported in your browser</span></span></div>
+  <div class="demo" style="flex-direction:column; align-items:stretch">
+    <label class="choice"><input type="checkbox"> Select this card (the whole card changes colour)</label>
+    <form class="has"><label>Email: <input type="email" placeholder="you@example.com"></label><div class="hint">Please enter a valid email address.</div></form>
+  </div>
+  <div class="cmp">
+    <div><h4 class="old">Before: JavaScript</h4><pre>cb.addEventListener('change', () =&gt;
+  card.classList.toggle('on', cb.checked));
+email.addEventListener('blur', () =&gt;
+  hint.hidden = email.validity.valid);</pre></div>
+    <div><h4 class="new">Now: CSS</h4><pre>.choice:has(input:checked) { background:#e9f7ee; }
+input:user-invalid { border-color:red; }
+form:has(input:user-invalid) .hint { display:block; }</pre></div>
+  </div>
+</section>
+
+<!-- 11 -->
+<section id="vt">
+  <h2><span class="num">11</span>Page-to-page transitions with cross-document View Transitions</h2>
+  <div class="meta">Replaces: SPA frameworks used only for smooth page changes. Chrome 126+ and Safari 18.2+. Firefox: not supported at the time of research. Interop 2026 includes it as a focus area. This feature needs two pages, so it is shown as code only.</div>
+  <div class="cmp">
+    <div><h4 class="old">Before: JavaScript</h4><pre>/* build an SPA router, intercept links,
+   fetch pages, swap DOM, then call: */
+document.startViewTransition(() =&gt; updateDOM());</pre></div>
+    <div><h4 class="new">Now: CSS (put on both pages)</h4><pre>@view-transition { navigation: auto; }
+
+.hero-img { view-transition-name: hero; }</pre></div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <p>No-JS Web Lab · built for a research methodology project · browser support notes reflect sources reviewed in 2026. Always re-check caniuse.com and MDN before relying on a feature.</p>
+</footer>
+</body>
+</html>
