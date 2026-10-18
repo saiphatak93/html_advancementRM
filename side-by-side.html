@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HTML vs JavaScript: Popups and Dialogs</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: system-ui, sans-serif; margin: 0; background: #f5f6fa; color: #1c2033; line-height: 1.5; }
+  header { background: #26307a; color: #fff; padding: 24px 20px; }
+  header h1 { margin: 0 0 6px; font-size: 1.5rem; }
+  header p { margin: 0; opacity: .85; }
+  main { max-width: 1100px; margin: 0 auto; padding: 20px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 800px) { .grid { grid-template-columns: 1fr; } }
+  .card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+  .card h2 { margin-top: 0; font-size: 1.15rem; }
+  .tag { display: inline-block; font-size: .75rem; padding: 2px 8px; border-radius: 99px; color: #fff; }
+  .tag.js { background: #c98a00; } .tag.nojs { background: #1b8a4b; }
+  .stage { display: grid; place-items: center; min-height: 260px; border: 2px dashed #c8cce0; border-radius: 10px; margin: 14px 0; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-bottom: 14px; }
+  button { font: inherit; padding: 8px 14px; border: 0; border-radius: 8px; background: #26307a; color: #fff; cursor: pointer; }
+  button:hover { background: #3a46a0; }
+  .tip { background: #1c2033; color: #fff; padding: 10px 14px; border-radius: 8px; max-width: 200px; font-size: .9rem; }
+  pre { background: #12152b; color: #d8def5; padding: 12px; border-radius: 8px; overflow-x: auto; font-size: .78rem; max-height: 260px; }
+  dialog { border: 0; border-radius: 12px; padding: 24px; max-width: 340px; box-shadow: 0 10px 40px rgba(0,0,0,.3); }
+  dialog::backdrop { background: rgba(10,12,30,.55); }
+  table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+  td, th { border: 1px solid #d5d8ea; padding: 8px; text-align: left; }
+  th { background: #eceefa; }
+  #support { font-weight: 600; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Same Website, With JavaScript and Without JavaScript</h1>
+  <p>Research demo: modern HTML + CSS can now do popups and dialogs that used to need JavaScript.</p>
+</header>
+
+<main>
+  <div class="card" style="margin-bottom:20px">
+    <h2>Your browser support check</h2>
+    <p id="support">Checking...</p>
+    <p style="margin:0;font-size:.9rem">The right-hand (No JS) side needs a recent browser. Verify exact versions on <b>caniuse.com</b> for: "Popover API", "Invoker Commands" and "CSS Anchor Positioning".</p>
+  </div>
+
+  <div class="grid">
+
+    <!-- ============ WITH JAVASCRIPT ============ -->
+    <section class="card">
+      <h2>Version A: WITH JavaScript <span class="tag js">JS</span></h2>
+      <div class="row">
+        <button data-pos="top">Top</button>
+        <button data-pos="bottom">Bottom</button>
+        <button data-pos="left">Left</button>
+        <button data-pos="right">Right</button>
+        <button id="jsModalBtn">Open Dialog</button>
+      </div>
+      <div class="stage"><button id="jsAnchor">Anchor Button</button></div>
+
+      <div id="jsTip" class="tip" style="position:fixed;display:none;z-index:50">Popup made with JavaScript</div>
+
+      <dialog id="jsDialog">
+        <h3>Dialog (JavaScript)</h3>
+        <p>Opened with <code>dialog.showModal()</code>.</p>
+        <button id="jsClose">Close</button>
+      </dialog>
+
+<pre>// JavaScript needed
+const tip = document.getElementById('jsTip');
+const anchor = document.getElementById('jsAnchor');
+
+document.querySelectorAll('[data-pos]').forEach(b =&gt; {
+  b.onclick = () =&gt; {
+    tip.style.display = 'block';
+    const a = anchor.getBoundingClientRect();
+    const t = tip.getBoundingClientRect();
+    const gap = 10, p = b.dataset.pos;
+    let x, y;
+    if (p === 'top')    { x = a.left + a.width/2 - t.width/2; y = a.top - t.height - gap; }
+    if (p === 'bottom') { x = a.left + a.width/2 - t.width/2; y = a.bottom + gap; }
+    if (p === 'left')   { x = a.left - t.width - gap; y = a.top + a.height/2 - t.height/2; }
+    if (p === 'right')  { x = a.right + gap;          y = a.top + a.height/2 - t.height/2; }
+    tip.style.left = x + 'px'; tip.style.top = y + 'px';
+  };
+});
+// close on outside click + Escape
+document.addEventListener('click', e =&gt; { if (!e.target.closest('[data-pos],#jsTip')) tip.style.display='none'; });
+document.addEventListener('keydown', e =&gt; { if (e.key==='Escape') tip.style.display='none'; });
+
+// dialog
+jsModalBtn.onclick = () =&gt; jsDialog.showModal();
+jsClose.onclick   = () =&gt; jsDialog.close();</pre>
+    </section>
+
+    <!-- ============ WITHOUT JAVASCRIPT ============ -->
+    <section class="card">
+      <h2>Version B: WITHOUT JavaScript <span class="tag nojs">HTML + CSS only</span></h2>
+      <div class="row">
+        <button popovertarget="pTop">Top</button>
+        <button popovertarget="pBottom">Bottom</button>
+        <button popovertarget="pLeft">Left</button>
+        <button popovertarget="pRight">Right</button>
+        <button commandfor="nojsDialog" command="show-modal">Open Dialog</button>
+      </div>
+      <div class="stage"><button id="noAnchor" style="anchor-name:--target">Anchor Button</button></div>
+
+      <div id="pTop"    popover class="tip pop" style="position-area:top">Popup: HTML only (top)</div>
+      <div id="pBottom" popover class="tip pop" style="position-area:bottom">Popup: HTML only (bottom)</div>
+      <div id="pLeft"   popover class="tip pop" style="position-area:left center">Popup: HTML only (left)</div>
+      <div id="pRight"  popover class="tip pop" style="position-area:right center">Popup: HTML only (right)</div>
+
+      <dialog id="nojsDialog">
+        <h3>Dialog (no JavaScript)</h3>
+        <p>Opened with <code>command="show-modal"</code>.</p>
+        <button commandfor="nojsDialog" command="close">Close</button>
+      </dialog>
+
+<pre>&lt;!-- No JavaScript at all --&gt;
+&lt;button popovertarget="pTop"&gt;Top&lt;/button&gt;
+&lt;button popovertarget="pBottom"&gt;Bottom&lt;/button&gt;
+&lt;button popovertarget="pLeft"&gt;Left&lt;/button&gt;
+&lt;button popovertarget="pRight"&gt;Right&lt;/button&gt;
+
+&lt;button style="anchor-name:--target"&gt;Anchor Button&lt;/button&gt;
+
+&lt;div id="pTop" popover style="position-area:top"&gt;...&lt;/div&gt;
+
+/* CSS */
+.pop { position-anchor: --target; inset: auto; margin: 10px; }
+
+&lt;!-- Dialog --&gt;
+&lt;button commandfor="d" command="show-modal"&gt;Open&lt;/button&gt;
+&lt;dialog id="d"&gt;
+  &lt;button commandfor="d" command="close"&gt;Close&lt;/button&gt;
+&lt;/dialog&gt;
+
+&lt;!-- Close on outside click and Escape is built in --&gt;</pre>
+    </section>
+  </div>
+
+  <div class="card" style="margin-top:20px">
+    <h2>Comparison table (for your report)</h2>
+    <table>
+      <tr><th>Feature</th><th>With JavaScript</th><th>HTML + CSS only</th></tr>
+      <tr><td>Show / hide popup</td><td>Event listeners + style changes</td><td><code>popover</code> + <code>popovertarget</code></td></tr>
+      <tr><td>Position top/bottom/left/right</td><td>getBoundingClientRect() maths</td><td>CSS <code>position-area</code> (anchor positioning)</td></tr>
+      <tr><td>Close on outside click</td><td>Manual document click listener</td><td>Built in ("light dismiss")</td></tr>
+      <tr><td>Close on Escape key</td><td>Manual keydown listener</td><td>Built in</td></tr>
+      <tr><td>Open modal dialog</td><td><code>dialog.showModal()</code></td><td><code>command="show-modal"</code></td></tr>
+      <tr><td>Works if JS is disabled / fails</td><td>No</td><td>Yes</td></tr>
+      <tr><td>Lines of code</td><td id="jsLines">-</td><td id="htmlLines">-</td></tr>
+    </table>
+  </div>
+</main>
+
+<style>
+  /* Only needed for Version B: connect each popover to the anchor button */
+  .pop { position-anchor: --target; inset: auto; margin: 10px; border: 0; }
+</style>
+
+<style>
+  /* ===== Responsive ===== */
+  html { -webkit-text-size-adjust:100%; }
+  .grid > *, .card > *, main, header > * { min-width:0; }
+  .card { overflow-wrap:anywhere; }
+  .tip { max-width:min(240px, 80vw); }
+  #pTop, #pBottom { position-try-fallbacks: flip-block; }
+  #pLeft, #pRight { position-try-fallbacks: flip-inline; }
+  dialog { max-width:min(340px, calc(100vw - 32px)); }
+  table { display:block; overflow-x:auto; }
+  @media (max-width:800px) {
+    header { padding:22px 16px; }
+    main { padding:16px; }
+    .card { padding:16px; }
+    .stage { min-height:200px; }
+    button { min-height:44px; padding:10px 14px; }
+    pre { font-size:.72rem; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition-duration:.01ms !important; } }
+</style>
+<script>
+  // ---------- Version A logic (this is the JS being demonstrated) ----------
+  const tip = document.getElementById('jsTip');
+  const anchor = document.getElementById('jsAnchor');
+  document.querySelectorAll('[data-pos]').forEach(b => {
+    b.onclick = () => {
+      tip.style.display = 'block';
+      const a = anchor.getBoundingClientRect(), t = tip.getBoundingClientRect();
+      const gap = 10, p = b.dataset.pos; let x, y;
+      if (p === 'top')    { x = a.left + a.width/2 - t.width/2; y = a.top - t.height - gap; }
+      if (p === 'bottom') { x = a.left + a.width/2 - t.width/2; y = a.bottom + gap; }
+      if (p === 'left')   { x = a.left - t.width - gap; y = a.top + a.height/2 - t.height/2; }
+      if (p === 'right')  { x = a.right + gap; y = a.top + a.height/2 - t.height/2; }
+      x = Math.max(8, Math.min(x, innerWidth - t.width - 8)); y = Math.max(8, Math.min(y, innerHeight - t.height - 8));
+      tip.style.left = x + 'px'; tip.style.top = y + 'px';
+    };
+  });
+  document.addEventListener('click', e => { if (!e.target.closest('[data-pos],#jsTip')) tip.style.display = 'none'; });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') tip.style.display = 'none'; });
+  jsModalBtn.onclick = () => jsDialog.showModal();
+  jsClose.onclick = () => jsDialog.close();
+
+  // ---------- Feature support check (only for the info box) ----------
+  const s = [
+    ['Popover API', 'popover' in HTMLElement.prototype],
+    ['Invoker Commands', 'commandForElement' in HTMLButtonElement.prototype],
+    ['Anchor Positioning', CSS.supports('position-area: top')]
+  ];
+  document.getElementById('support').innerHTML =
+    s.map(([n, ok]) => (ok ? '✅ ' : '❌ ') + n).join(' &nbsp; | &nbsp; ');
+  document.getElementById('jsLines').textContent = '~20 lines of JS';
+  document.getElementById('htmlLines').textContent = '0 lines of JS';
+</script>
+</body>
+</html>
